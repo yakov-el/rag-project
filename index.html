@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="he">
+<head>
+    <meta charset="UTF-8" />
+    <title>מערכת RAG - העלאת קבצים וחיפוש</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            direction: rtl;
+            padding: 20px;
+            background-color: #fafafa;
+        }
+        #logs {
+            background: #f0f0f0;
+            border: 1px solid #ccc;
+            height: 200px;
+            overflow-y: scroll;
+            padding: 10px;
+            margin-bottom: 20px;
+            white-space: pre-wrap;
+            font-size: 0.9rem;
+        }
+        input, button, textarea {
+            font-size: 1rem;
+            margin: 5px 0;
+            padding: 8px;
+            width: 100%;
+            box-sizing: border-box;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+        }
+        button {
+            cursor: pointer;
+            background-color: #0078d7;
+            color: white;
+            border: none;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #005ea1;
+        }
+        #results {
+            margin-top: 20px;
+        }
+        .result-item {
+            margin-bottom: 15px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: white;
+        }
+        .result-text {
+            margin-bottom: 8px;
+            white-space: pre-wrap;
+        }
+        .result-images img {
+            max-height: 150px;
+            margin: 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        label {
+            display: block;
+            margin-top: 15px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>מערכת RAG - העלאת קבצים וחיפוש</h1>
+
+    <h2>1. העלאת קבצים (docx, xlsx)</h2>
+    <form id="uploadForm">
+        <input type="file" id="files" name="files" multiple />
+        <button type="submit">העלה קבצים ואונדקס</button>
+    </form>
+
+    <h2>2. לוגים</h2>
+    <pre id="logs"></pre>
+
+    <h2>3. חיפוש במסמכים שהועלו</h2>
+    <form id="searchForm">
+        <label for="query">הקלד את השאלה כאן:</label>
+        <input type="text" id="query" placeholder="הקלד את השאלה כאן..." />
+        
+        <label for="apikey">הזן את מפתח ה-OpenAI API שלך:</label>
+        <input type="text" id="apikey" placeholder="הזן את ה-API Key כאן" />
+
+        <button type="submit">חפש</button>
+    </form>
+
+    <div id="results"></div>
+
+    <script src="/static/script.js"></script>
+</body>
+</html>
