@@ -30,7 +30,7 @@ The application is built with Python and FastAPI, exposing endpoints for file up
 1. Clone the repository:
 
    ```bash
-   git clone https://github.com/<your_username>/<your_repo>.git
+   git clone https://github.com/yakov-el/rag-project.git
    cd <your_repo>
 Create and activate a Python virtual environment:
 
