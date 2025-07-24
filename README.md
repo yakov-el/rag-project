@@ -1,46 +1,66 @@
-# RAG System for Excel and Word Documents
+# RAG Project – Retrieval-Augmented Generation for Excel and Word Documents
 
-## Overview
+This project implements a **Retrieval-Augmented Generation (RAG)** system designed to load and process two types of documents:
 
-This project implements a Retrieval-Augmented Generation (RAG) system designed to load and process two types of files:
+- **Excel (.xlsx)** files with structured data  
+- **Word (.docx)** files with unstructured text  
 
-- Excel (.xlsx) files with structured data  
-- Word (.docx) files with unstructured text
+The system ingests these files, chunks their content, converts the chunks into vector embeddings using a multilingual transformer model, and stores them in a **FAISS** vector index. It supports searching for relevant chunks based on a user query, applies a **re-ranking** model to improve result relevance, and finally generates an answer using an **OpenAI GPT-4o** large language model (LLM).
 
-The system ingests these files, chunks their content, converts the chunks into vector embeddings using a multilingual transformer model, and stores them in a FAISS vector index. It supports searching for relevant chunks based on a user query, applies a reranking model to improve result relevance, and finally generates an answer using an OpenAI large language model (LLM).
-
-The application is built with Python and FastAPI, exposing endpoints for file upload and search queries.
+The application is built with **Python** and **FastAPI**, exposing endpoints for file upload and search queries.
 
 ---
 
-## Technical Highlights
+## 🔍 Technical Highlights
 
-- **Embedding model:** `intfloat/multilingual-e5-large` transformer for multilingual text embeddings  
-- **Vector index:** FAISS for efficient nearest neighbor search  
-- **Chunking:** HybridChunker from docling to segment documents into semantically coherent chunks  
-- **Re-ranking:** Alibaba-NLP/gte-multilingual-reranker-base model for improving search result relevance  
-- **Answer generation:** OpenAI GPT-4o (chat completions) used to generate final answers from retrieved contexts  
-- **API framework:** FastAPI for serving upload and search endpoints  
-- **Image support:** Extracts images from Word documents and links them to related text chunks  
+- **Embedding model:** `intfloat/multilingual-e5-large` – for multilingual text embeddings (supports English and Hebrew)
+- **Chunking strategy:** Two-step process using `HybridChunker` from [docling](https://github.com/IBM/docling):
+  - First, documents are split into **large, semantically coherent paragraph-level chunks**
+  - Then, each paragraph is further split into **smaller sub-chunks**, enhancing retrieval resolution
+  - This strategy enables the **re-ranking model** to precisely select the most relevant **sub-paragraph**, improving answer quality and reducing hallucinations
+- **Vector index:** FAISS – efficient approximate nearest neighbor search
+- **Re-ranking:** `Alibaba-NLP/gte-multilingual-reranker-base` – cross-encoder model improves final relevance score and selects the best-matching chunk
+- **Answer generation:** OpenAI GPT-4o via Chat Completions API – composes a final answer using top-ranked context
+- **API framework:** FastAPI – for robust and async-ready endpoints
+- **Image support:** Images extracted from Word documents are linked to relevant text chunks (though not used in embeddings or generation)
 
 ---
 
-## Installation
+## 🧠 Optional Hybrid Search (Not Implemented)
 
-1. Clone the repository:
+While not currently included, the system design allows optional **hybrid search**, combining:
 
-   ```bash
-   git clone https://github.com/yakov-el/rag-project.git
-   cd rag-project
+- **Dense vector search** (via FAISS)
+- **Sparse keyword search** (e.g., BM25 via Elasticsearch or `rank_bm25`)
+
+Hybrid retrieval could be useful for identifying documents that match specific keywords or terminology (e.g., names, codes, units), complementing semantic retrieval. In this implementation, it was **not integrated**, as the semantic retrieval with dense embeddings was sufficient for the use case.
+
+---
+
+## 🚀 Installation
+
+Clone the repository:
+
+```bash
+git clone https://github.com/yakov-el/rag-project.git
+cd rag-project
 Create and activate a Python virtual environment:
 
 bash
 Copy
 Edit
 python -m venv env
-# On Windows:
+On Windows:
+
+bash
+Copy
+Edit
 .\env\Scripts\activate
-# On Linux/Mac:
+On Linux/Mac:
+
+bash
+Copy
+Edit
 source env/bin/activate
 Install dependencies:
 
@@ -48,48 +68,94 @@ bash
 Copy
 Edit
 pip install -r requirements.txt
-Set your OpenAI API key as an environment variable or pass it directly when querying.
+Set your OpenAI API key as an environment variable (optional), or pass it directly when making search requests.
 
-Running the Application
-Run the FastAPI server:
+⚙️ Running the Application
+Launch the FastAPI server:
 
 bash
 Copy
 Edit
 uvicorn main:app --reload
-The API will be available at http://localhost:8000.
+Visit: http://localhost:8000
 
-Usage Example
-Upload files:
-Send a POST request to /upload with your .xlsx or .docx files.
-The system will process, chunk, embed, and index them.
+📁 Usage
+Upload Files
+Send a POST request to /upload with .xlsx or .docx files.
+The system will:
 
-Search query:
-Send a GET request to /search?q=your_question&apikey=your_openai_api_key.
+Load the documents
 
+Chunk their content (large → small)
+
+Embed each chunk
+
+Index them in FAISS
+
+Search Query
+Send a GET request to /search:
+
+bash
+Copy
+Edit
+/search?q=your_question&apikey=your_openai_api_key
 Example:
 
-http
+perl
 Copy
 Edit
 http://localhost:8000/search?q=What%20is%20the%20purpose%20of%20the%20home%20test?&apikey=sk-...
-The system will return the most relevant chunks, reranked and combined, plus a generated answer by the LLM.
+The system will return:
 
-Architecture Summary
-Ingestion: DocumentConverter and HybridChunker from docling handle loading and chunking of Excel and Word files.
+The most relevant chunks
 
-Embedding: Chunks are converted into embeddings with a transformer model and stored in a FAISS index.
+Reranked results
 
-Retrieval: Queries are embedded, and the nearest neighbors are retrieved from FAISS.
+A final answer generated by GPT-4o
 
-Re-ranking: Candidate chunks are reranked with a cross-encoder model to improve answer relevance.
+🏗️ Architecture Overview
+sql
+Copy
+Edit
++--------------------+
+|  Upload Excel/Word |
++--------------------+
+           ↓
++----------------------------+
+|  Chunking (HybridChunker) |
++----------------------------+
+           ↓
++----------------------------+
+|  Embedding (E5 model)      |
++----------------------------+
+           ↓
++----------------------------+
+|  FAISS Vector Store        |
++----------------------------+
+           ↓
++----------------------------+
+|  Query Embedding           |
++----------------------------+
+           ↓
++----------------------------+
+|  Retrieve Top-k Neighbors |
++----------------------------+
+           ↓
++----------------------------+
+|  Re-Rank (Cross Encoder)   |
++----------------------------+
+           ↓
++----------------------------+
+|  Answer with GPT-4o        |
++----------------------------+
+📌 Notes
+The system supports both English and Hebrew content
 
-Generation: The final prompt is constructed with the top chunks and sent to OpenAI's GPT-4o to generate a natural language answer.
+Your OpenAI API key should be kept private
 
-Notes
-Keep your OpenAI API key private.
+Image-to-text alignment is implemented, but images are not embedded or passed to GPT-4o
 
-The system currently supports both English and Hebrew content but can be extended.
+You can extend the system to support additional file formats or search strategies
 
-Images extracted from Word documents are linked to text chunks but are not directly used in embeddings or generation.
-
+📫 Contact
+Feel free to fork, star, or open issues on the GitHub repo.
